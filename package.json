@@ -1,0 +1,24 @@
+{
+  "name": "worker-lurker",
+  "version": "1.0.0",
+  "description": "A department and employee management app.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/sammn721/worker-lurker.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/sammn721/worker-lurker/issues"
+  },
+  "homepage": "https://github.com/sammn721/worker-lurker#readme",
+  "dependencies": {
+    "inquirer": "^8.1.2",
+    "mysql2": "^2.2.5"
+  }
+}
