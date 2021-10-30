@@ -164,17 +164,21 @@ const viewAllDepartments = () => {
 
 const addDepartment = async () => {
     // `inquirer.prompt` for department info
-    inquirer
-    .prompt([
-
-    ])
-    .then((res) => {
-        // THEN INSERT INTO department () VALUES
-        db.query( `INSERT INTO department (department_name) VALUES (?)`, res.department_name, function(err, res) {
-
-            nextAction();
-
-        })
+    const addDepartmentPrompts = await inquirer.prompt([
+        {
+            type: "input",
+            message: "What is the name of the department?",
+            name: "departmentName"
+        }
+    ]);
+    const sql = `INSERT INTO department (name) VALUES (?)`;
+    const params = addDepartmentPrompts.departmentName;
+    query(sql, params).then((res) => {
+        console.log(`Added ${params} to the database.`)
+        return nextAction();
+    })
+    .catch((err) => {
+        console.error(err);
     })
 }
 
