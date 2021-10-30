@@ -14,7 +14,7 @@ const db = mysql.createConnection(
 const query = utils.promisify(db.query).bind(db);
 
 const nextAction = async () => {
-    const response = await inquirer.prompt([
+    const res = await inquirer.prompt([
         {
             type:"list",
             message: "What would you like to do?",
@@ -22,7 +22,7 @@ const nextAction = async () => {
             choices: ["View All Employees", "Add Employee", "Update Employee Role", "View All Roles", "Add Role", "View All Departments", "Add Department", "Quit"]
         }
     ]);
-    switch (response.nextAction) {
+    switch (res.nextAction) {
         case "View All Employees":
             return viewAllEmployees();
         case "Add Employee":
@@ -45,8 +45,8 @@ const nextAction = async () => {
 
 const viewAllEmployees = () => {
     query(`SELECT employee.id, employee.first_name, employee.last_name, role.title, role.department, role.salary, manager.employee_name AS manager FROM employee employee LEFT OUTER JOIN (SELECT role.id, role.title, department.name AS department, role.salary FROM role role JOIN department department ON role.department_id = department.id) role ON employee.role_id = role.id LEFT OUTER JOIN (SELECT id, CONCAT(first_name, " ", last_name) as employee_name FROM employee) manager ON employee.manager_id = manager.id`)
-    .then((response) => {
-        console.table(response);
+    .then((res) => {
+        console.table(res);
         return nextAction();
     })
     .catch((err) => {
@@ -55,21 +55,70 @@ const viewAllEmployees = () => {
 };
 
 const addEmployee = async () => {
-    inquirer
-    .prompt([
-
-    ])
-    .then((response) => {
-
+    let roleString = [], roleTitles = [], managerString = [], managerNames = [];
+    await query(`Select role.id, role.title FROM role role`)
+    .then((res) => {
+        roleString = JSON.parse(JSON.stringify(res));
+        for (let i = 0; i < roleString.length; i++) {
+            roleTitles.push(roleString[i].title);
+        }
     })
-}
+    .catch((err) => {
+        console.error(err);
+    })
+    await query(`SELECT employee.id, CONCAT(employee.first_name, " ", employee.last_name) AS name FROM employee employee`)
+    .then((res) => {
+        managerString = JSON.parse(JSON.stringify(res));
+        managerString.push({ id: null, name: 'None' });
+        for (let i = 0; i < managerString.length; i++) {
+            managerNames.push(managerString[i].name);
+        };
+    })
+    .catch((err) => {
+        console.error(err);
+    })
+    const addEmployeePrompts = await inquirer.prompt([
+        {
+            type: "input",
+            message: "What is the employee's first name?",
+            name: "employeeFirstName"
+        }, {
+            type: "input",
+            message: "What is the employee's last name?",
+            name: "employeeLastName"
+        }, {
+            type: "list",
+            message: "What is the employee's role?",
+            name: "employeeRole",
+            choices: roleTitles
+        }, {
+            type: "list",
+            message: "Who is the employee's manager?",
+            name: "employeeManager",
+            choices: managerNames
+        }
+    ]);
+
+    const sql = `INSERT INTO employee (first_name, last_name, role_id, manager_id) VALUES (?, ?, ?, ?)`;
+    const employeeRoleId = roleString[roleString.findIndex(arr => arr.title === addEmployeePrompts.employeeRole)].id;
+    const employeeManagerId = managerString[managerString.findIndex(arr => arr.name === addEmployeePrompts.employeeManager)].id;
+    const params = [addEmployeePrompts.employeeFirstName, addEmployeePrompts.employeeLastName, employeeRoleId, employeeManagerId];
+
+    query(sql, params).then((res) => {
+        console.log(`Added ${addEmployeePrompts.employeeFirstName + " " + addEmployeePrompts.employeeLastName} to the database.`);
+        return nextAction();
+    })
+    .catch((err) => {
+        console.error(err);
+    })
+};
 
 const updateEmployeeRole = async () => {
     inquirer
     .prompt([
 
     ])
-    .then((response) => {
+    .then((res) => {
 
     })
 }
@@ -79,22 +128,22 @@ const viewAllRoles = () => {
     .prompt([
 
     ])
-    .then((response) => {
+    .then((res) => {
 
     })
 }
 
 const addRole = async () => {
     // Get all existing departments
-    db.query( `SELECT`, response.department_name, function(err, response) {
+    db.query( `SELECT`, res.department_name, function(err, res) {
         // `inquirer.prompt` for role info
         inquirer
         .prompt([
 
         ])
-        .then((response) => {
+        .then((res) => {
             //  THEN INSERT INTO department () VALUES
-            db.query(`INSERT INTO role (name) VALUES (?)`, response.roles, function (err, response) {
+            db.query(`INSERT INTO role (name) VALUES (?)`, res.roles, function (err, res) {
 
                 nextAction();
                 
@@ -108,7 +157,7 @@ const viewAllDepartments = () => {
     .prompt([
 
     ])
-    .then((response) => {
+    .then((res) => {
 
     })
 }
@@ -119,9 +168,9 @@ const addDepartment = async () => {
     .prompt([
 
     ])
-    .then((response) => {
+    .then((res) => {
         // THEN INSERT INTO department () VALUES
-        db.query( `INSERT INTO department (department_name) VALUES (?)`, response.department_name, function(err, response) {
+        db.query( `INSERT INTO department (department_name) VALUES (?)`, res.department_name, function(err, res) {
 
             nextAction();
 
