@@ -124,14 +124,15 @@ const updateEmployeeRole = async () => {
 }
 
 const viewAllRoles = () => {
-    inquirer
-    .prompt([
-
-    ])
+    query(`SELECT role.id, role.title, department.name AS department, role.salary FROM role role JOIN department department ON role.department_id = department.id`)
     .then((res) => {
-
+        console.table(res);
+        return nextAction();
     })
-}
+    .catch((err) => {
+        console.error(err)
+    })
+};
 
 const addRole = async () => {
     let departmentString = [], departmentNames = [];
@@ -170,7 +171,7 @@ const addRole = async () => {
     .catch((err) => {
         console.error(err);
     })
-}
+};
 
 const viewAllDepartments = () => {
     query(`SELECT * FROM department`).then((res) => {
