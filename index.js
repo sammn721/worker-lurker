@@ -47,7 +47,6 @@ const viewAllEmployees = () => {
     inquirer
     .prompt([
 
-
     ])
     .then((response) => {
 
