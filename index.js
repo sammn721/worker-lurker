@@ -9,7 +9,7 @@ const db = mysql.createConnection(
         password: 'yopassword',
         database: 'workers_db'
     }
-)
+);
 
 const query = utils.promisify(db.query).bind(db);
 
@@ -41,7 +41,7 @@ const nextAction = async () => {
             console.log(`\nthx4lurkin'\n`);
             return process.exit(0);
     }
-}
+};
 
 const viewAllEmployees = () => {
     query(`SELECT employee.id, employee.first_name, employee.last_name, role.title, role.department, role.salary, manager.employee_name AS manager FROM employee employee LEFT OUTER JOIN (SELECT role.id, role.title, department.name AS department, role.salary FROM role role JOIN department department ON role.department_id = department.id) role ON employee.role_id = role.id LEFT OUTER JOIN (SELECT id, CONCAT(first_name, " ", last_name) as employee_name FROM employee) manager ON employee.manager_id = manager.id`)
@@ -134,21 +134,41 @@ const viewAllRoles = () => {
 }
 
 const addRole = async () => {
-    // Get all existing departments
-    db.query( `SELECT`, res.department_name, function(err, res) {
-        // `inquirer.prompt` for role info
-        inquirer
-        .prompt([
+    let departmentString = [], departmentNames = [];
+    await query(`SELECT * FROM department`).then((res) => {
+        departmentString = JSON.parse(JSON.stringify(res));
+        for (let i = 0; i < departmentString.length; i++) {
+            departmentNames.push(departmentString[i].name)
+        }
+    })
+    .catch((err) => console.error(err))
+    
+    const addRolePrompts = await inquirer.prompt([
+        {
+            type: "input",
+            message:"What is the name of the role?",
+            name: "roleName"
+        }, {
+            type: "input",
+            message: "What is the salary of the role?",
+            name: "roleSalary"
+        }, {
+            type: "list",
+            message: "Which department does the role belong to?",
+            name: "roleDepartment",
+            choices: departmentNames
+        }
+    ])
+    const sql = `INSERT INTO role (title, salary, department_id) VALUES (?, ?, ?)`;
+    const roleDepartmentId = departmentString[departmentString.findIndex(arr => arr.name === addRolePrompts.roleDepartment)].id;
+    const params = [addRolePrompts.roleName, addRolePrompts.roleSalary, roleDepartmentId];
 
-        ])
-        .then((res) => {
-            //  THEN INSERT INTO department () VALUES
-            db.query(`INSERT INTO role (name) VALUES (?)`, res.roles, function (err, res) {
-
-                nextAction();
-                
-            })
-        })
+    query(sql, params).then((res) => {
+        console.log(`Added ${addRolePrompts.roleName} to the database.`)
+        return nextAction()
+    })
+    .catch((err) => {
+        console.error(err);
     })
 }
 
@@ -180,6 +200,6 @@ const addDepartment = async () => {
     .catch((err) => {
         console.error(err);
     })
-}
+};
 
 nextAction();
