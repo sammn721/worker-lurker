@@ -44,14 +44,15 @@ const nextAction = async () => {
 }
 
 const viewAllEmployees = () => {
-    inquirer
-    .prompt([
-
-    ])
+    query(`SELECT employee.id, employee.first_name, employee.last_name, role.title, role.department, role.salary, manager.employee_name AS manager FROM employee employee LEFT OUTER JOIN (SELECT role.id, role.title, department.name AS department, role.salary FROM role role JOIN department department ON role.department_id = department.id) role ON employee.role_id = role.id LEFT OUTER JOIN (SELECT id, CONCAT(first_name, " ", last_name) as employee_name FROM employee) manager ON employee.manager_id = manager.id`)
     .then((response) => {
-
+        console.table(response);
+        return nextAction();
     })
-}
+    .catch((err) => {
+        console.error(err);
+    })
+};
 
 const addEmployee = async () => {
     inquirer
