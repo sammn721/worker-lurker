@@ -114,14 +114,50 @@ const addEmployee = async () => {
 };
 
 const updateEmployeeRole = async () => {
-    inquirer
-    .prompt([
+    let employeeString = [], employeeNames = [], roleString = [], roleTitles = [];
 
-    ])
+    await query(`SELECT employee.id, CONCAT(employee.first_name, " ", employee.last_name) AS name FROM employee employee`)
     .then((res) => {
-
+        employeeString = JSON.parse(JSON.stringify(res));
+        for (let i = 0; i < employeeString.length; i++) {
+            employeeNames.push(employeeString[i].name);            
+        }
     })
-}
+    .catch((err) => console.error(err));
+    await query(`SELECT role.id, role.title FROM role role`)
+    .then((res) => {
+        roleString = JSON.parse(JSON.stringify(res));
+        for (let i = 0; i < roleString.length; i++) {
+            roleTitles.push(roleString[i].title)
+        }
+    })
+    .catch((err) => console.error(err));
+    const updateRolePrompts = await inquirer.prompt([
+        {
+            type: "list",
+            message: "Which employee's role do you want to update?",
+            name: "employeeName",
+            choices: employeeNames
+        }, {
+            type: "list",
+            message: "Which role do you want to assign to the selected employee?",
+            name: "updatedRole",
+            choices: roleTitles
+        }
+    ])
+    const sql = `UPDATE employee SET role_id = ? WHERE id = ?`;
+    const employeeNameId = employeeString[employeeString.findIndex(arr => arr.name === updateRolePrompts.employeeName)].id;
+    const roleTitleId = roleString[roleString.findIndex(arr => arr.title === updateRolePrompts.updatedRole)].id;
+    const params = [roleTitleId, employeeNameId];
+
+    query(sql, params).then((res) => {
+        console.log(`Updated ${updateRolePrompts.employeeName}'s role in the database.`)
+        return nextAction()
+    })
+    .catch((err) => {
+        console.error(err);
+    })
+};
 
 const viewAllRoles = () => {
     query(`SELECT role.id, role.title, department.name AS department, role.salary FROM role role JOIN department department ON role.department_id = department.id`)
