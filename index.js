@@ -153,14 +153,14 @@ const addRole = async () => {
 }
 
 const viewAllDepartments = () => {
-    inquirer
-    .prompt([
-
-    ])
-    .then((res) => {
-
+    query(`SELECT * FROM department`).then((res) => {
+        console.table(res);
+        return nextAction();
     })
-}
+    .catch((err) => {
+        console.error(err);
+    })
+};
 
 const addDepartment = async () => {
     // `inquirer.prompt` for department info
